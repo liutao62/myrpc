@@ -1,12 +1,11 @@
 package org.hut.endpoint;
 
 import com.alibaba.fastjson.JSONObject;
-import org.hut.context.MyRpcConstEnum;
-import org.hut.context.MyRpcContext;
 import org.hut.handler.AioHandler;
 import org.hut.handler.Handler;
-import org.hut.registry.RegistryCenter;
-import org.hut.registry.model.MwBean;
+import org.hut.namespace.model.MwBean;
+import org.hut.serialize.MyRequest;
+import org.hut.serialize.SerializeSupport;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -21,15 +20,19 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
+import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class AioEndPoint extends AbstractEndpoint {
-
-    MyRpcContext.getRpcContext();
-    
+    private static final Random RANDOM = new Random();
     static AsynchronousChannelGroup channelGroup;
+
+    private int port = Integer.valueOf(System.getProperty("myrpc.port"));
+    //    private int port = 8081;
+    AsynchronousServerSocketChannel serverSocketChannel = null;
+    AsynchronousSocketChannel socketChannel = null;
+    private Handler handler = new AioHandler();
 
     static {
         try {
@@ -39,19 +42,13 @@ public class AioEndPoint extends AbstractEndpoint {
         }
     }
 
-    //    private int port = 8081;
-    AsynchronousServerSocketChannel serverSocketChannel = null;
-    AsynchronousSocketChannel socketChannel = null;
-    private Handler handler = new AioHandler();
-    private int port = Integer.valueOf(System.getProperty(MyRpcConstEnum.RPC_PORT.getDefine()));
-
     public AioEndPoint() {
-        init();
+        start();
     }
 
 
     @Override
-    public void init() {
+    public void start() {
         try {
             serverSocketChannel = AsynchronousServerSocketChannel.open();
             serverSocketChannel.bind(new InetSocketAddress(port));
@@ -66,32 +63,39 @@ public class AioEndPoint extends AbstractEndpoint {
     }
 
     @Override
-    public void start() {
-
-    }
-
-    @Override
-    public void shutdown() {
+    public void stop() {
         try {
             serverSocketChannel.close();
             socketChannel.close();
         } catch (IOException e) {
-            System.out.println(e);
+            e.printStackTrace();
         }
     }
 
     @Override
     public <T> T service(MwBean mwBean, Object[] args) {
         // todo 序列化动态支持，返回序列化类型
+        byte[] bytes = SerializeSupport.serialize(MyRequest.builder()
+                .namespace(mwBean.getNamespace())
+                .methodName(mwBean.getMethodName())
+                .args(args).build());
 
-        MyRpcRequest request = new MyRpcRequest();
-        request.setEntity(new RpcEntity(args));
+        Header header = new Header(RANDOM.nextInt(Integer.MAX_VALUE), 0);
 
+        RpcEntity rpcEntity = new RpcEntity(header, bytes);
+        JSONObject param = new JSONObject();
+        param.put("header", header);
+        param.put("mwBean", mwBean);
+        if (args != null) {
+            for (int i = 0; i < args.length; i++) {
+                param.put("arg" + i, args[i]);
+            }
+        }
 //        ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
 //        byteBuffer.put(rpcEntity.toString().getBytes());
 
         Charset charset = Charset.forName("ISO-8859-1");
-        ByteBuffer encode = charset.encode(JSONObject.toJSONString(request));
+        ByteBuffer encode = charset.encode(JSONObject.toJSONString(param));
 
         StringBuilder responseBuilder = new StringBuilder();
         try {
@@ -100,33 +104,8 @@ public class AioEndPoint extends AbstractEndpoint {
 //            socketChannel.connect(socketAddress, null, handler);
             // 这里 BIO 了
             socketChannel.connect(socketAddress).get(1, TimeUnit.SECONDS);//block until the connection is established
-            tryRpc(charset, encode, responseBuilder);
-
-            System.out.println(responseBuilder);
-        } catch (Exception e) {
-            System.out.println("service ---" + e);
-            try {
-                tryRpc(charset, encode, responseBuilder);
-            } catch (Exception exception) {
-                System.out.println("service exception---" + e);
-            }
-        }
-        JSONObject response = (JSONObject) JSONObject.parse(responseBuilder.toString());
-        Object resultType = response.get("resultType");
-        Object result = response.get("result");
-        Class<?> aClass = null;
-        try {
-            aClass = Class.forName(resultType.toString());
-        } catch (ClassNotFoundException e) {
-            System.out.println(e);
-        }
-
-        return (T) JSONObject.parseObject(result.toString(), aClass);
-    }
-
-    private void tryRpc(Charset charset, ByteBuffer encode, StringBuilder responseBuilder) throws InterruptedException, ExecutionException {
-        Integer bytesWritten = socketChannel.write(encode).get();
-        ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
+            Integer bytesWritten = socketChannel.write(encode).get();
+            ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
 //            socketChannel.read(byteBuffer, byteBuffer, new CompletionHandler<Integer, ByteBuffer>() {
 //                        public void completed(Integer bytesRead, ByteBuffer buffer) {
 //                            buffer.flip();
@@ -147,11 +126,28 @@ public class AioEndPoint extends AbstractEndpoint {
 //                        }
 //                    }
 //            );
-        if (socketChannel.read(byteBuffer).get() != -1) {
-            byteBuffer.flip();
-            CharBuffer decode = charset.decode(byteBuffer);
-            responseBuilder.append(decode);
+            if (socketChannel.read(byteBuffer).get() != -1) {
+                byteBuffer.flip();
+                CharBuffer decode = charset.decode(byteBuffer);
+                responseBuilder.append(decode);
+                System.out.println(decode);
+            }
+
+            System.out.println(responseBuilder);
+        } catch (Exception e) {
+            System.out.println("service ---" + e);
         }
+        JSONObject response = (JSONObject) JSONObject.parse(responseBuilder.toString());
+        Object resultType = response.get("resultType");
+        Object result = response.get("result");
+        Class<?> aClass = null;
+        try {
+            aClass = Class.forName(resultType.toString());
+        } catch (ClassNotFoundException e) {
+            System.out.println(e);
+        }
+
+        return (T) JSONObject.parseObject(result.toString(), aClass);
     }
 
     /**
@@ -202,7 +198,7 @@ public class AioEndPoint extends AbstractEndpoint {
             if (text != null && text.startsWith("{")) {
                 JSONObject request = (JSONObject) JSONObject.parse(text);
                 MwBean mwBean = JSONObject.parseObject(request.get("mwBean").toString(), MwBean.class);
-                Object bean = RegistryCenter.getBean(mwBean.getNamespace());
+                Object bean = org.hut.middleware.MiddleWareServiceContainer.getBean(mwBean.getNamespace());
                 Method method = null;
                 Object executorResult = null;
                 try {

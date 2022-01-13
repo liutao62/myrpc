@@ -1,24 +1,25 @@
-package org.hut.registry.model;
+package org.hut.namespace.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 
 import java.util.Objects;
 
 @Data
-@Builder
-@AllArgsConstructor
 public class MwBean {
     private String ip,
             namespace,
             methodName;
 
     private int port,
-            weight = 1;
+            weight;
 
     public MwBean() {
 
+    }
+
+    public MwBean(String namespace, String methodName) {
+        this.namespace = namespace;
+        this.methodName = methodName;
     }
 
     @Override

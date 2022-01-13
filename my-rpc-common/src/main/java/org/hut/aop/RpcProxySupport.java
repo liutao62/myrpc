@@ -2,7 +2,7 @@ package org.hut.aop;
 
 import org.hut.handler.AioHandler;
 import org.hut.handler.Handler;
-import org.hut.registry.model.MwBean;
+import org.hut.namespace.model.MwBean;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -24,7 +24,7 @@ public class RpcProxySupport {
 
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            return handler.handle(MwBean.builder().namespace(namespace).methodName(method.getName()).build(), args);
+            return handler.handle(new MwBean(namespace, method.getName()), args);
         }
     }
 }

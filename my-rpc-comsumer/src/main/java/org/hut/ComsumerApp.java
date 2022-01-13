@@ -2,7 +2,8 @@ package org.hut;
 
 import org.hut.context.MyRpcContext;
 import org.hut.entity.Hello;
-import org.hut.registry.RegistryCenter;
+import org.hut.namespace.INamespaceService;
+import org.hut.namespace.impl.NamespaceServiceImpl;
 import org.hut.service.IHelloService;
 
 /**
@@ -10,9 +11,12 @@ import org.hut.service.IHelloService;
  */
 public class ComsumerApp {
     public static void main(String[] args) {
-        MyRpcContext rpcContext = MyRpcContext.loadProperty("myrpc.properties");
-        RegistryCenter registryCenter = rpcContext.getRegistryCenter();
-        IHelloService helloService = registryCenter.getRemoteService("org.hut.service.IHelloService", IHelloService.class);
+        System.setProperty("myrpc.port", "8081");
+        MyRpcContext rpcContext = MyRpcContext.getRpcContext();
+        rpcContext.start();
+
+        INamespaceService namespaceService = new NamespaceServiceImpl();
+        IHelloService helloService = namespaceService.getRemoteService("org.hut.service.IHelloService", IHelloService.class);
 
         Hello hello = new Hello();
         hello.setName("comsumer");

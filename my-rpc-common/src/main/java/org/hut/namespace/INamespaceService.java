@@ -1,11 +1,10 @@
-package org.hut.registry;
+package org.hut.namespace;
 
-import org.hut.context.MyRpcContextLifeCycle;
-import org.hut.registry.model.MwBean;
+import org.hut.namespace.model.MwBean;
 
 import java.util.List;
 
-public interface RegistryCenter extends MyRpcContextLifeCycle {
+public interface INamespaceService {
 
     /**
      * 服务注册

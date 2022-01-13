@@ -2,7 +2,7 @@ package org.hut.handler;
 
 import org.hut.context.MyRpcContext;
 import org.hut.endpoint.Endpoint;
-import org.hut.registry.model.MwBean;
+import org.hut.namespace.model.MwBean;
 
 import java.util.HashMap;
 import java.util.Map;

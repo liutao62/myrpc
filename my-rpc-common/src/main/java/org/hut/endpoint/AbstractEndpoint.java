@@ -1,8 +1,7 @@
 package org.hut.endpoint;
 
-import org.hut.context.MyRpcContextLifeCycle;
-import org.hut.registry.RegistryCenter;
-import org.hut.registry.model.MwBean;
+import org.hut.namespace.INamespaceService;
+import org.hut.namespace.model.MwBean;
 
 import java.net.Socket;
 import java.util.ArrayList;
@@ -12,7 +11,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class AbstractEndpoint implements Endpoint {
 
-    private List<MyRpcContextLifeCycle> lifeCycleList = new ArrayList<>();
+    private List<EndPointLifeCycle> lifeCycleList = new ArrayList<>();
+
+    protected INamespaceService nameSpaceService;
 
     private Map<MwBean, Socket> mwBeanChannelMap = new ConcurrentHashMap<>();
 

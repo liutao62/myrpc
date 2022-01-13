@@ -1,6 +1,6 @@
 package org.hut.handler;
 
-import org.hut.registry.model.MwBean;
+import org.hut.namespace.model.MwBean;
 
 public interface Handler {
 

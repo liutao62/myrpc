@@ -33,7 +33,7 @@
     </dependency>
     <dependency>
       <groupId>org.hut</groupId>
-      <artifactId>my-rpc-common</artifactId>
+      <artifactId>myrpc-common</artifactId>
       <version>1.0-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>

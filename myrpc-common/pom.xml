@@ -5,10 +5,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.hut</groupId>
-    <artifactId>my-rpc-common</artifactId>
+    <artifactId>myrpc-common</artifactId>
     <version>1.0-SNAPSHOT</version>
 
-    <name>my-rpc-common</name>
+    <name>myrpc-common</name>
     <!-- FIXME change it to the project's website -->
     <url>http://www.example.com</url>
 

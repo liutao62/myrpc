@@ -5,16 +5,16 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>org.hut</groupId>
-  <artifactId>my-rpc</artifactId>
+  <artifactId>myrpc</artifactId>
   <packaging>pom</packaging>
   <version>1.0-SNAPSHOT</version>
   <modules>
-    <module>my-rpc-provider</module>
-    <module>my-rpc-comsumer</module>
-    <module>my-rpc-common</module>
+    <module>myrpc-provider</module>
+    <module>myrpc-comsumer</module>
+    <module>myrpc-common</module>
   </modules>
 
-  <name>my-rpc</name>
+  <name>myrpc</name>
   <!-- FIXME change it to the project's website -->
   <url>http://www.example.com</url>
 

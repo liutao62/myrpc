@@ -1,15 +1,21 @@
 package org.hut.protocol;
 
-import java.nio.Buffer;
+import com.alibaba.fastjson.JSONObject;
 
-public class JsonProtocol implements Protocol{
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+
+public class JsonProtocol implements Protocol {
+
+    Charset charset = Charset.defaultCharset();
+
     @Override
-    public Buffer serialization(MyRpcRequest request) {
-        return null;
+    public ByteBuffer serialization(MyRpcEntity request) {
+        return charset.encode(JSONObject.toJSONString(request));
     }
 
     @Override
-    public String deserialization(Buffer buffer) {
-        return null;
+    public String deserialization(ByteBuffer buffer) {
+        return charset.decode(buffer).toString();
     }
 }

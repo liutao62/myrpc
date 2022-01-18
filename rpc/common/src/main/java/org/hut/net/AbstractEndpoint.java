@@ -1,5 +1,7 @@
 package org.hut.net;
 
+import org.hut.protocol.MyRpcEntity;
+
 import java.net.ServerSocket;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
@@ -22,4 +24,6 @@ public abstract class AbstractEndpoint<S, U> {
     protected abstract void accept();
 
     public abstract void unbind();
+
+    protected abstract void write(MyRpcEntity rpcEntity);
 }

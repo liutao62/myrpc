@@ -3,8 +3,6 @@ package org.hut.net;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
-
 public class AbstractEndpointTest {
 
     AbstractEndpoint endpoint = new BioEndpoint();
@@ -12,6 +10,7 @@ public class AbstractEndpointTest {
 
     @Before
     public void setUp() throws Exception {
+        System.setProperty("myrpc.port", "8080");
 //        endpoint.bind();
         nioEndpoint.bind();
     }
@@ -21,5 +20,7 @@ public class AbstractEndpointTest {
         // curl 127.0.0.1:8081/uioioi
 //        endpoint.accept();
         nioEndpoint.accept();
+
+        System.out.println("test accept after");
     }
 }

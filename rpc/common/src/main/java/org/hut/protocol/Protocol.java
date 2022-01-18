@@ -1,9 +1,9 @@
 package org.hut.protocol;
 
-import java.nio.Buffer;
+import java.nio.ByteBuffer;
 
 public interface Protocol {
-    Buffer serialization(MyRpcRequest request);
+    ByteBuffer serialization(MyRpcEntity request);
 
-    String deserialization(Buffer buffer);
+    String deserialization(ByteBuffer buffer);
 }

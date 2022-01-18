@@ -1,5 +1,7 @@
 package org.hut.net;
 
+import org.hut.protocol.MyRpcEntity;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -37,6 +39,11 @@ public class BioEndpoint extends AbstractEndpoint {
 
     @Override
     public void unbind() {
+
+    }
+
+    @Override
+    protected void write(MyRpcEntity rpcEntity) {
 
     }
 

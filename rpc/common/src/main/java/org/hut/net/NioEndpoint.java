@@ -1,5 +1,10 @@
 package org.hut.net;
 
+import org.hut.protocol.JsonProtocol;
+import org.hut.protocol.MyRpcEntity;
+import org.hut.protocol.MyRpcHeader;
+import org.hut.protocol.Protocol;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -14,6 +19,7 @@ public class NioEndpoint extends AbstractEndpoint {
 
     private Selector selector;
     SelectionKey register;
+    Protocol protocol = new JsonProtocol();
 
     @Override
     public void bind() {
@@ -29,12 +35,13 @@ public class NioEndpoint extends AbstractEndpoint {
         try {
             serverSocketChannel = ServerSocketChannel.open();
 
-            InetSocketAddress address = new InetSocketAddress(8081);
-            serverSocketChannel.socket().bind(address, 100);
+            InetSocketAddress address = new InetSocketAddress(Integer.valueOf(System.getProperty("myrpc.port", "8081")));
+            serverSocketChannel.bind(address, 100);
             serverSocketChannel.configureBlocking(false);
             register = serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+            this.socketChannel = SocketChannel.open();
         } catch (IOException e) {
-
+            System.out.println("-------)");
         }
 
     }
@@ -42,7 +49,10 @@ public class NioEndpoint extends AbstractEndpoint {
     @Override
     protected void accept() {
         try {
-            while (selector.select() > 0) {
+            while (true) {
+                if (selector.select(3000) == 1) {
+                    continue;
+                }
                 Set<SelectionKey> selectedKeys = selector.selectedKeys();
                 Iterator<SelectionKey> keyIterator = selectedKeys.iterator();
                 while (keyIterator.hasNext()) {
@@ -50,33 +60,20 @@ public class NioEndpoint extends AbstractEndpoint {
                     // SelectionKey.channel返回的channel实例需要强转为我们实际使用的具体的channel类型，
                     // 例如ServerSocketChannel或SocketChannel.
 
-                    if (key.isAcceptable()){
+                    if (key.isAcceptable()) {
                         System.out.println("-------------isAcceptable");
-                    }
-
-                    if (key.isReadable()) {
+                        hanldeAccept(key);
+                    } else if (key.isReadable()) {
                         // a channel is ready for reading
-                        SocketChannel channel = (SocketChannel) key.channel();
-                        ByteBuffer byteBuffer = (ByteBuffer) key.attachment();
-                        int read = channel.read(byteBuffer);
-                        if (read == -1) {
-                            channel.close();
-                        } else if (read > 0) {
-                            key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-                            System.out.println("Get data length: " + read);
-                        }
+                        handleRead(key);
                     } else if (key.isWritable()) {
                         // a channel is ready for writing
-                        ByteBuffer buf = (ByteBuffer) key.attachment();
-                        buf.flip();
+                        ByteBuffer byteBuffer = ByteBuffer.wrap("12121212121".getBytes());
+                        byteBuffer.flip();
                         SocketChannel clientChannel = (SocketChannel) key.channel();
 
-                        clientChannel.write(buf);
-
-                        if (!buf.hasRemaining()) {
-                            key.interestOps(SelectionKey.OP_READ);
-                        }
-                        buf.compact();
+                        clientChannel.write(byteBuffer);
+                        clientChannel.close();
                     }
                     keyIterator.remove();
                 }
@@ -86,8 +83,52 @@ public class NioEndpoint extends AbstractEndpoint {
         }
     }
 
+    private void handleRead(SelectionKey key) throws IOException {
+        SocketChannel channel = (SocketChannel) key.channel();
+        ByteBuffer byteBuffer = (ByteBuffer) key.attachment();
+        byteBuffer = byteBuffer == null ? ByteBuffer.allocate(1024) : byteBuffer;
+        int read = channel.read(byteBuffer);
+        StringBuilder builder = new StringBuilder();
+        while (read > 0) {
+            byteBuffer.flip();
+            String deserialization = protocol.deserialization(byteBuffer);
+            System.out.println("-------deserialization" + deserialization);
+            builder.append(deserialization);
+            byteBuffer.clear();
+            read = channel.read(byteBuffer);
+        }
+        channel.write(ByteBuffer.wrap("hello -------------".getBytes()));
+        channel.close();
+    }
+
+    private void hanldeAccept(SelectionKey key) throws IOException {
+        ServerSocketChannel channel = (ServerSocketChannel) key.channel();
+
+        SocketChannel accept = channel.accept();
+        accept.configureBlocking(false);
+
+        accept.register(selector, SelectionKey.OP_WRITE, ByteBuffer.allocate(1024));
+    }
+
     @Override
     public void unbind() {
+
+    }
+
+    @Override
+    protected void write(MyRpcEntity rpcEntity) {
+        MyRpcHeader header = rpcEntity.getHeader();
+        String remoteHost = header.getRemoteHost();
+        int port = header.getPort();
+        try {
+            InetSocketAddress address = new InetSocketAddress(remoteHost,port);
+            socketChannel.configureBlocking(false);
+            socketChannel.connect(address);
+            socketChannel.register(selector, SelectionKey.OP_READ, rpcEntity);
+        } catch (IOException e) {
+            System.out.println("write-----" + e);
+        }
+
 
     }
 }

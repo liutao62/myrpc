@@ -1,6 +1,8 @@
 package org.hut.net;
 
+import org.hut.protocol.JsonProtocol;
 import org.hut.protocol.MyRpcEntity;
+import org.hut.protocol.Protocol;
 
 import java.net.ServerSocket;
 import java.nio.channels.ServerSocketChannel;
@@ -18,6 +20,7 @@ public abstract class AbstractEndpoint<S, U> {
     protected SocketChannel socketChannel;
     protected ServerSocketChannel serverSocketChannel;
     protected ServerSocket socket;
+    protected Protocol protocol = new JsonProtocol();
 
     public abstract void bind();
 
@@ -25,5 +28,5 @@ public abstract class AbstractEndpoint<S, U> {
 
     public abstract void unbind();
 
-    protected abstract void write(MyRpcEntity rpcEntity);
+    protected abstract MyRpcEntity write(MyRpcEntity rpcEntity);
 }

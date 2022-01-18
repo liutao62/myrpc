@@ -1,9 +1,7 @@
 package org.hut.net;
 
-import org.hut.protocol.JsonProtocol;
 import org.hut.protocol.MyRpcEntity;
 import org.hut.protocol.MyRpcHeader;
-import org.hut.protocol.Protocol;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -19,7 +17,6 @@ public class NioEndpoint extends AbstractEndpoint {
 
     private Selector selector;
     SelectionKey register;
-    Protocol protocol = new JsonProtocol();
 
     @Override
     public void bind() {
@@ -101,10 +98,14 @@ public class NioEndpoint extends AbstractEndpoint {
             byteBuffer.clear();
             read = channel.read(byteBuffer);
         }
+        MyRpcEntity data = protocol.getData(builder.toString());
+        MyRpcHeader header = new MyRpcHeader();
+        header.setRemoteHost(" from server");
+        data.setHeader(header);
         if (requestFlag) {
             channel.register(selector, SelectionKey.OP_WRITE, true);
         } else {
-            channel.write(ByteBuffer.wrap("hello -------------".getBytes()));
+            channel.write(protocol.serialization(data));
             channel.close();
         }
     }
@@ -124,7 +125,7 @@ public class NioEndpoint extends AbstractEndpoint {
     }
 
     @Override
-    protected void write(MyRpcEntity rpcEntity) {
+    protected MyRpcEntity write(MyRpcEntity rpcEntity) {
         MyRpcHeader header = rpcEntity.getHeader();
         String remoteHost = header.getRemoteHost();
         int port = header.getPort();
@@ -137,6 +138,6 @@ public class NioEndpoint extends AbstractEndpoint {
             System.out.println("write-----" + e);
         }
 
-
+        return null;
     }
 }

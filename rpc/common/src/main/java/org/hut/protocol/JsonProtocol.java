@@ -18,4 +18,10 @@ public class JsonProtocol implements Protocol {
     public String deserialization(ByteBuffer buffer) {
         return charset.decode(buffer).toString();
     }
+
+    @Override
+    public MyRpcEntity getData(String desData) {
+        return JSONObject.parseObject(desData, MyRpcEntity.class);
+    }
+
 }

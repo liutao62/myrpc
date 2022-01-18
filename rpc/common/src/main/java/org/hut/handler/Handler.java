@@ -1,8 +1,15 @@
 package org.hut.handler;
 
+import org.hut.net.AbstractEndpoint;
+import org.hut.net.BioEndpoint;
 import org.hut.protocol.MyRpcEntity;
 
-public class AbstractHandler {
+public class Handler {
+
+//    @Autowired
+//    @Lazy
+    private AbstractEndpoint endpoint = new BioEndpoint();
+
     public MyRpcEntity requestDispatcher(MyRpcEntity requestEntity) {
         return null;
     }

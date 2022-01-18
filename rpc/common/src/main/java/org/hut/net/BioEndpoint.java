@@ -2,10 +2,13 @@ package org.hut.net;
 
 import org.hut.protocol.MyRpcEntity;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
+import java.nio.ByteBuffer;
 
 public class BioEndpoint extends AbstractEndpoint {
 
@@ -43,8 +46,28 @@ public class BioEndpoint extends AbstractEndpoint {
     }
 
     @Override
-    protected void write(MyRpcEntity rpcEntity) {
+    protected MyRpcEntity write(MyRpcEntity rpcEntity) {
+        Socket socket = new Socket();
+        try {
 
+//            socket.bind(new InetSocketAddress(rpcEntity.getHeader().getRemoteHost(), rpcEntity.getHeader().getPort()));
+            socket.connect(new InetSocketAddress(rpcEntity.getHeader().getRemoteHost(), rpcEntity.getHeader().getPort()), 2000);
+            OutputStream outputStream = socket.getOutputStream();
+            outputStream.write(protocol.serialization(rpcEntity).array());
+            InputStream inputStream = socket.getInputStream();
+            while (inputStream.available() == 0){
+
+            }
+            byte[] bytes = new byte[inputStream.available()];
+            System.out.println("available == " + inputStream.available());
+            int read = inputStream.read(bytes);
+            String deserialization = protocol.deserialization(ByteBuffer.wrap(bytes));
+            MyRpcEntity data = protocol.getData(deserialization);
+            return data;
+        } catch (Exception e) {
+            System.out.println("org.hut.net.BioEndpoint.write    " + e);
+        }
+        return null;
     }
 
     class ConnectIOnHandler extends Thread {
@@ -67,7 +90,7 @@ public class BioEndpoint extends AbstractEndpoint {
                     System.out.println(s);
 
                     OutputStream outputStream = socket.getOutputStream();
-                    outputStream.write("hello BIO".getBytes(StandardCharsets.UTF_8));
+                    outputStream.write("hello BIO".getBytes());
                     socket.close();
                 } catch (IOException e) {
 

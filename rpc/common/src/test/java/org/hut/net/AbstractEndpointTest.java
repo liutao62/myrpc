@@ -10,7 +10,7 @@ public class AbstractEndpointTest {
 
     @Before
     public void setUp() throws Exception {
-        System.setProperty("myrpc.port", "8080");
+        System.setProperty("myrpc.port", "8081");
 //        endpoint.bind();
         nioEndpoint.bind();
     }

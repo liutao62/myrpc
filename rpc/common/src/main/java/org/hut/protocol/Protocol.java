@@ -6,4 +6,6 @@ public interface Protocol {
     ByteBuffer serialization(MyRpcEntity request);
 
     String deserialization(ByteBuffer buffer);
+
+    MyRpcEntity getData(String desData);
 }

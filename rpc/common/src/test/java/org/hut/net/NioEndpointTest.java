@@ -27,5 +27,11 @@ public class NioEndpointTest {
         rpcEntity.setBody(body);
         rpcEntity.setHeader(header);
         nioEndpoint.write(rpcEntity);
+
+        try {
+            Thread.sleep(10000);
+        } catch (Exception e) {
+
+        }
     }
 }

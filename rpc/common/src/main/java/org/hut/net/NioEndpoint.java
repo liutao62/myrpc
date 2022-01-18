@@ -65,8 +65,10 @@ public class NioEndpoint extends AbstractEndpoint {
                         hanldeAccept(key);
                     } else if (key.isReadable()) {
                         // a channel is ready for reading
+                        System.out.println("-------------isReadable");
                         handleRead(key);
                     } else if (key.isWritable()) {
+                        System.out.println("-------------isWritable");
                         // a channel is ready for writing
                         ByteBuffer byteBuffer = ByteBuffer.wrap("12121212121".getBytes());
                         byteBuffer.flip();
@@ -86,7 +88,9 @@ public class NioEndpoint extends AbstractEndpoint {
     private void handleRead(SelectionKey key) throws IOException {
         SocketChannel channel = (SocketChannel) key.channel();
         ByteBuffer byteBuffer = (ByteBuffer) key.attachment();
-        byteBuffer = byteBuffer == null ? ByteBuffer.allocate(1024) : byteBuffer;
+        // 是否
+        boolean requestFlag = byteBuffer != null;
+        byteBuffer = ByteBuffer.allocate(1024);
         int read = channel.read(byteBuffer);
         StringBuilder builder = new StringBuilder();
         while (read > 0) {
@@ -97,8 +101,12 @@ public class NioEndpoint extends AbstractEndpoint {
             byteBuffer.clear();
             read = channel.read(byteBuffer);
         }
-        channel.write(ByteBuffer.wrap("hello -------------".getBytes()));
-        channel.close();
+        if (requestFlag) {
+            channel.register(selector, SelectionKey.OP_WRITE, true);
+        } else {
+            channel.write(ByteBuffer.wrap("hello -------------".getBytes()));
+            channel.close();
+        }
     }
 
     private void hanldeAccept(SelectionKey key) throws IOException {
@@ -107,7 +115,7 @@ public class NioEndpoint extends AbstractEndpoint {
         SocketChannel accept = channel.accept();
         accept.configureBlocking(false);
 
-        accept.register(selector, SelectionKey.OP_WRITE, ByteBuffer.allocate(1024));
+        accept.register(selector, SelectionKey.OP_READ, key.attachment());
     }
 
     @Override
@@ -121,7 +129,7 @@ public class NioEndpoint extends AbstractEndpoint {
         String remoteHost = header.getRemoteHost();
         int port = header.getPort();
         try {
-            InetSocketAddress address = new InetSocketAddress(remoteHost,port);
+            InetSocketAddress address = new InetSocketAddress(remoteHost, port);
             socketChannel.configureBlocking(false);
             socketChannel.connect(address);
             socketChannel.register(selector, SelectionKey.OP_READ, rpcEntity);

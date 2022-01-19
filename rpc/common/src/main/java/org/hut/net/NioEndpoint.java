@@ -44,7 +44,7 @@ public class NioEndpoint extends AbstractEndpoint {
     }
 
     @Override
-    protected void accept() {
+    public void accept() {
         try {
             while (true) {
                 if (selector.select(3000) == 1) {

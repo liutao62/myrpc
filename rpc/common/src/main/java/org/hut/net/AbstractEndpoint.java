@@ -1,8 +1,9 @@
 package org.hut.net;
 
-import org.hut.protocol.JsonProtocol;
+import org.hut.manager.AbstractManager;
 import org.hut.protocol.MyRpcEntity;
 import org.hut.protocol.Protocol;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.ServerSocket;
 import java.nio.channels.ServerSocketChannel;
@@ -20,13 +21,21 @@ public abstract class AbstractEndpoint<S, U> {
     protected SocketChannel socketChannel;
     protected ServerSocketChannel serverSocketChannel;
     protected ServerSocket socket;
-    protected Protocol protocol = new JsonProtocol();
+    @Autowired
+    protected Protocol protocol;
+    @Autowired
+    protected AbstractManager manager;
 
     public abstract void bind();
 
-    protected abstract void accept();
+    public abstract void accept();
 
     public abstract void unbind();
 
     protected abstract MyRpcEntity write(MyRpcEntity rpcEntity);
+
+
+    public ExecutorService getExecutor() {
+        return EXECUTOR;
+    }
 }

@@ -18,7 +18,7 @@ public class BioEndpoint extends AbstractEndpoint {
     }
 
     @Override
-    protected void accept() {
+    public void accept() {
         try {
             while (!Thread.currentThread().isInterrupted()) {
                 Socket clientSocket = socket.accept();
